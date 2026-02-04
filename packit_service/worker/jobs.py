@@ -329,7 +329,13 @@ class SteveJobs:
             # on the issue created by us or not in packit/notifications?
         elif isinstance(
             self.event,
-            (github.pr.Comment, gitlab.mr.Comment, pagure.pr.Comment),
+            (
+                github.pr.Comment,
+                gitlab.mr.Comment,
+                pagure.pr.Comment,
+                github.issue.Comment,
+                gitlab.issue.Comment,
+            ),
         ) and self.is_help_comment(self.event.comment):
             self.event.comment_object.add_reaction(COMMENT_REACTION)
             GitPullRequestHelpHandler.get_signature(

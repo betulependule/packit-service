@@ -302,6 +302,8 @@ class GithubFasVerificationHandler(
 @reacts_to(event=github.pr.Comment)
 @reacts_to(event=gitlab.mr.Comment)
 @reacts_to(event=pagure.pr.Comment)
+@reacts_to(event=github.issue.Comment)
+@reacts_to(event=gitlab.issue.Comment)
 class GitPullRequestHelpHandler(
     JobHandler,
     PackitAPIWithDownstreamMixin,
