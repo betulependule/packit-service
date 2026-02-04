@@ -326,7 +326,7 @@ class GitPullRequestHelpHandler(
         self.comment = self.data.event_dict.get("comment")
 
     def run(self) -> TaskResults:
-        if self.comment.startswith("/packit-ci"):  # type: ignore
+        if self.comment.startswith("/packit-ci") or self.comment.startswith("/packit-ci-stg"):  # type: ignore
             parser = get_pr_comment_parser_fedora_ci(
                 prog=HELP_COMMENT_PROG_FEDORA_CI,
                 description=HELP_COMMENT_DESCRIPTION,
