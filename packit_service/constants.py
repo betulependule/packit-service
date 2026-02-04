@@ -29,7 +29,7 @@ HELP_COMMENT_EPILOG = (
     "     Mastodon: @packit@fosstodon.org"
 )
 HELP_NOTE = "If using Fedora CI, refer to `/packit-ci help` instead."
-HELP_NOTE_FEDORA_CI = "If not using Fedora CI, refer to `/packit help` instead."
+HELP_NOTE_FEDORA_CI = "For default Packit behaviour, refer to `/packit help` instead."
 
 KOJI_PRODUCTION_BUILDS_ISSUE = "https://pagure.io/releng/issue/9801"
 
