@@ -20,12 +20,6 @@ from packit.utils import nested_get
 from packit_service.config import ServiceConfig
 from packit_service.constants import (
     COMMENT_REACTION,
-    HELP_COMMENT_DESCRIPTION,
-    HELP_COMMENT_EPILOG,
-    HELP_COMMENT_PROG,
-    HELP_COMMENT_PROG_FEDORA_CI,
-    HELP_NOTE,
-    HELP_NOTE_FEDORA_CI,
     PACKIT_HELP_COMMAND,
     PACKIT_VERIFY_FAS_COMMAND,
     TASK_ACCEPTED,
@@ -130,17 +124,9 @@ def parse_comment(
         return ParsedComment()
 
     if comment.startswith("/packit-ci"):
-        parser = get_pr_comment_parser_fedora_ci(
-            prog=HELP_COMMENT_PROG_FEDORA_CI,
-            description=HELP_COMMENT_DESCRIPTION,
-            epilog=HELP_COMMENT_EPILOG.format(note=HELP_NOTE_FEDORA_CI),
-        )
+        parser = get_pr_comment_parser_fedora_ci()
     else:
-        parser = get_pr_comment_parser(
-            prog=HELP_COMMENT_PROG,
-            description=HELP_COMMENT_DESCRIPTION,
-            epilog=HELP_COMMENT_EPILOG.format(note=HELP_NOTE),
-        )
+        parser = get_pr_comment_parser()
 
     try:
         args = parser.parse_args(commands)
