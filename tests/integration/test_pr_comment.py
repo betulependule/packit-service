@@ -241,6 +241,7 @@ def test_pr_comment_help_handler_github(
     pr_help_comment_event,
 ):
     flexmock(Signature).should_receive("apply_async").once()
+    flexmock(Pushgateway).should_receive("push").times(2).and_return()
     flexmock(GithubProject).should_receive("is_private").and_return(False)
     pr = flexmock(head_commit="12345")
     flexmock(GithubProject).should_receive("get_pr").and_return(pr)
@@ -267,6 +268,7 @@ def test_pr_comment_help_handler_github(
 
 def test_pr_comment_help_handler_pagure(pagure_pr_comment_added):
     flexmock(Signature).should_receive("apply_async").once()
+    flexmock(Pushgateway).should_receive("push").times(2).and_return()
     pagure_pr_comment_added["pullrequest"]["comments"][0]["comment"] = "/packit help"
 
     pr = flexmock(target_branch="the_distgit_branch").should_receive("comment").mock()
