@@ -9,6 +9,7 @@ TODO: The build and test handlers are independent and should be moved away.
 import logging
 from typing import Optional
 
+from packit.api import PackitAPI
 from packit.config import (
     Deployment,
     JobConfig,
@@ -306,10 +307,14 @@ class GithubFasVerificationHandler(
 @reacts_to(event=gitlab.issue.Comment)
 class GitPullRequestHelpHandler(
     JobHandler,
-    PackitAPIWithDownstreamMixin,
     GetPullRequestMixin,
 ):
     task_name = TaskName.help
+
+    @property
+    def packit_api(self) -> PackitAPI: ...
+
+    def clean_api(self) -> None: ...
 
     def __init__(
         self,
