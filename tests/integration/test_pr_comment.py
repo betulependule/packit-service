@@ -242,11 +242,13 @@ def test_pr_comment_help_handler_github(
     flexmock(Signature).should_receive("apply_async").once()
     flexmock(Pushgateway).should_receive("push").times(2).and_return()
     flexmock(GithubProject).should_receive("is_private").and_return(False)
+
     pr = flexmock(head_commit="12345")
-    flexmock(GithubProject).should_receive("get_pr").and_return(pr)
     comment = flexmock()
-    flexmock(pr).should_receive("get_comment").and_return(comment)
-    flexmock(comment).should_receive("add_reaction").with_args(COMMENT_REACTION).once()
+
+    flexmock(GithubProject).should_receive("get_pr").and_return(pr)
+    pr.should_receive("get_comment").and_return(comment)
+    comment.should_receive("add_reaction").with_args(COMMENT_REACTION).once()
 
     processing_results = SteveJobs().process_message(pr_help_comment_event)
     event_dict, _, job_config, package_config = get_parameters_from_results(
@@ -273,8 +275,8 @@ def test_pr_comment_help_handler_pagure(pagure_pr_comment_added):
     pr = flexmock(target_branch="the_distgit_branch").should_receive("comment").mock()
 
     comment = flexmock()
-    flexmock(pr).should_receive("get_comment").and_return(comment)
-    flexmock(comment).should_receive("add_reaction").with_args(COMMENT_REACTION).once()
+    pr.should_receive("get_comment").and_return(comment)
+    comment.should_receive("add_reaction").with_args(COMMENT_REACTION).once()
 
     flexmock(
         PagureProject,

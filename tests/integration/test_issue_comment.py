@@ -85,8 +85,8 @@ def test_issue_comment_help_handler_github(
         full_repo_name="packit-service/hello-world",
         get_file_content=lambda path, ref, headers: packit_yaml,
         get_files=lambda ref, recursive: ["foo.spec", "packit.yaml"],
+        get_releases=list,
     )
-    flexmock(GithubProject).should_receive("get_releases").and_return([])
 
     flexmock(Signature).should_receive("apply_async").once()
     flexmock(Pushgateway).should_receive("push").times(2).and_return()
