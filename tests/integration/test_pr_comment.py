@@ -227,19 +227,18 @@ def one_job_finished_with_msg(results: list[TaskResults], msg: str):
         raise AssertionError(f"None of the jobs finished with {msg!r}")
 
 
-@pytest.mark.parametrize(
-    "mock_pr_comment_functionality",
-    (
-        [
-            [],
-        ]
-    ),
-    indirect=True,
-)
 def test_pr_comment_help_handler_github(
-    mock_pr_comment_functionality,
     pr_help_comment_event,
 ):
+    packit_yaml = "{'specfile_path': 'the-specfile.spec'}"
+
+    flexmock(
+        GithubProject,
+        full_repo_name="packit-service/hello-world",
+        get_file_content=lambda path, ref, headers: packit_yaml,
+        get_files=lambda ref, recursive: ["foo.spec", "packit.yaml"],
+    )
+
     flexmock(Signature).should_receive("apply_async").once()
     flexmock(Pushgateway).should_receive("push").times(2).and_return()
     flexmock(GithubProject).should_receive("is_private").and_return(False)
