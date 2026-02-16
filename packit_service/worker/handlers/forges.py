@@ -40,9 +40,9 @@ from packit_service.models import (
     GithubInstallationModel,
 )
 from packit_service.utils import (
+    get_comment_parser,
+    get_comment_parser_fedora_ci,
     get_packit_commands_from_comment,
-    get_pr_comment_parser,
-    get_pr_comment_parser_fedora_ci,
 )
 from packit_service.worker.allowlist import Allowlist
 from packit_service.worker.checker.abstract import Checker
@@ -307,9 +307,10 @@ class GithubFasVerificationHandler(
 @reacts_to(event=pagure.pr.Comment)
 @reacts_to(event=github.issue.Comment)
 @reacts_to(event=gitlab.issue.Comment)
-class GitPullRequestHelpHandler(
+class GitCommentHelpHandler(
     JobHandler,
     GetPullRequestMixin,
+    GetIssueMixin,
 ):
     task_name = TaskName.help
 
@@ -334,28 +335,28 @@ class GitPullRequestHelpHandler(
 
     def run(self) -> TaskResults:
         if self.comment.startswith("/packit-ci-stg"):  # type: ignore
-            parser = get_pr_comment_parser_fedora_ci(
+            parser = get_comment_parser_fedora_ci(
                 prog=HELP_COMMENT_PROG_FEDORA_CI_STG,
                 description=HELP_COMMENT_DESCRIPTION,
                 epilog=HELP_COMMENT_EPILOG.format(note=HELP_NOTE_FEDORA_CI),
             )
 
         elif self.comment.startswith("/packit-ci"):  # type: ignore
-            parser = get_pr_comment_parser_fedora_ci(
+            parser = get_comment_parser_fedora_ci(
                 prog=HELP_COMMENT_PROG_FEDORA_CI,
                 description=HELP_COMMENT_DESCRIPTION,
                 epilog=HELP_COMMENT_EPILOG.format(note=HELP_NOTE_FEDORA_CI),
             )
 
         elif self.comment.startswith("/packit-stg"):  # type: ignore
-            parser = get_pr_comment_parser(
+            parser = get_comment_parser(
                 prog=HELP_COMMENT_PROG_STG,
                 description=HELP_COMMENT_DESCRIPTION,
                 epilog=HELP_COMMENT_EPILOG.format(note=HELP_NOTE),
             )
 
         else:
-            parser = get_pr_comment_parser(
+            parser = get_comment_parser(
                 prog=HELP_COMMENT_PROG,
                 description=HELP_COMMENT_DESCRIPTION,
                 epilog=HELP_COMMENT_EPILOG.format(note=HELP_NOTE),
@@ -363,5 +364,13 @@ class GitPullRequestHelpHandler(
 
         help_message = parser.format_help()
 
-        self.pr.comment(body=help_message)
+        if self.data.event_type in (
+            gitlab.mr.Comment.event_type(),
+            github.pr.Comment.event_type(),
+            pagure.pr.Comment.event_type(),
+        ):
+            self.pr.comment(body=help_message)
+        else:
+            self.issue.comment(body=help_message)
+
         return TaskResults(success=True, details={"msg": help_message})

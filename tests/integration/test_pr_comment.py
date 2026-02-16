@@ -102,11 +102,11 @@ from packit_service.worker.reporting import (
 from packit_service.worker.reporting.news import DistgitAnnouncement
 from packit_service.worker.result import TaskResults
 from packit_service.worker.tasks import (
+    run_comment_help_handler,
     run_downstream_koji_build,
     run_downstream_koji_scratch_build_handler,
     run_downstream_testing_farm_handler,
     run_koji_build_handler,
-    run_pr_help_handler,
     run_pull_from_upstream_handler,
     run_retrigger_bodhi_update,
     run_tag_into_sidetag_handler,
@@ -257,7 +257,7 @@ def test_pr_comment_help_handler_github(
 
     flexmock(pr).should_receive("comment").once()
 
-    results = run_pr_help_handler(
+    results = run_comment_help_handler(
         package_config=package_config,
         event=event_dict,
         job_config=job_config,
@@ -291,7 +291,7 @@ def test_pr_comment_help_handler_pagure(pagure_pr_comment_added):
     )
     assert len(processing_results) == 1
 
-    results = run_pr_help_handler(
+    results = run_comment_help_handler(
         package_config=package_config,
         event=event_dict,
         job_config=job_config,

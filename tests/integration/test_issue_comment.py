@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime
 
 import pytest
-from celery.canvas import group
+from celery.canvas import Signature, group
 from flexmock import flexmock
 from ogr.abstract import GitTag, PRStatus
 from ogr.read_only import PullRequestReadOnly
@@ -54,6 +54,7 @@ from packit_service.worker.jobs import SteveJobs
 from packit_service.worker.monitoring import Pushgateway
 from packit_service.worker.reporting import BaseCommitStatus
 from packit_service.worker.tasks import (
+    run_comment_help_handler,
     run_issue_comment_retrigger_bodhi_update,
     run_propose_downstream_handler,
     run_retrigger_downstream_koji_build,
@@ -65,6 +66,105 @@ def issue_comment_propose_downstream_event(forge):
     return json.loads(
         (DATA_DIR / "webhooks" / forge / "issue_propose_downstream.json").read_text(),
     )
+
+
+@pytest.fixture
+def issue_help_comment_event():
+    return json.loads(
+        (DATA_DIR / "webhooks" / "github" / "issue_comment_help_command.json").read_text(),
+    )
+
+
+@pytest.fixture
+def mock_issue_comment_functionality():
+    packit_yaml = "{'specfile_path': 'the-specfile.spec'}"
+
+    flexmock(
+        GithubProject,
+        full_repo_name="packit-service/hello-world",
+        get_file_content=lambda path, ref, headers: packit_yaml,
+        get_files=lambda ref, filter_regex: ["the-specfile.spec"],
+        get_web_url=lambda: "https://github.com/the-namespace/the-repo",
+    )
+    flexmock(
+        GithubProject,
+        get_files=lambda ref, recursive: ["foo.spec", "packit.yaml"],
+    )
+    db_project_object = flexmock(
+        id=4,
+        project_event_model_type=ProjectEventModelType.issue,
+    )
+    db_project_event = (
+        flexmock()
+        .should_receive("get_project_event_object")
+        .and_return(db_project_object)
+        .mock()
+        .should_receive("set_packages_config")
+        .mock()
+    )
+    gr = mock_release_class(
+        release_class=GithubRelease,
+        project_class=GithubProject,
+        tag_name="0.5.1",
+        url="packit-service/packit",
+        created_at="",
+        tarball_url="https://foo/bar",
+        git_tag=flexmock(GitTag),
+    )
+    flexmock(GithubProject).should_receive("get_releases").and_return([gr])
+    flexmock(GithubProject).should_receive("get_sha_from_tag").and_return("abcdef")
+
+    # TODO: for some reason, ProjectEventModel and IssueModel are never used
+    # test passes without these mocks
+
+    flexmock(ProjectEventModel).should_receive("get_or_create").with_args(
+        type=ProjectEventModelType.issue,
+        event_id=4,
+        commit_sha=None,
+    ).and_return(db_project_event)
+
+    flexmock(IssueModel).should_receive("get_or_create").with_args(
+        issue_id=5,
+        namespace=None,
+        repo_name=None,
+        project_url="https://github.com/packit/hello-world",
+    ).and_return(db_project_object)
+
+    flexmock(LocalProject, refresh_the_arguments=lambda: None)
+    flexmock(LocalProjectBuilder, _refresh_the_state=lambda *args: flexmock())
+    flexmock(Allowlist, check_and_report=True)
+
+
+def test_issue_comment_help_handler_github(
+    mock_issue_comment_functionality,
+    issue_help_comment_event,
+):
+    flexmock(Signature).should_receive("apply_async").once()
+    flexmock(Pushgateway).should_receive("push").times(2).and_return()
+    flexmock(GithubProject).should_receive("is_private").and_return(False)
+
+    issue = flexmock()
+    comment = flexmock()
+
+    flexmock(GithubProject).should_receive("get_issue").and_return(issue)
+    issue.should_receive("get_comment").and_return(comment)
+    comment.should_receive("add_reaction").with_args(COMMENT_REACTION).once()
+
+    processing_results = SteveJobs().process_message(issue_help_comment_event)
+    event_dict, _, job_config, package_config = get_parameters_from_results(
+        processing_results,
+    )
+    assert len(processing_results) == 1
+
+    issue.should_receive("comment").once()
+
+    results = run_comment_help_handler(
+        package_config=package_config,
+        event=event_dict,
+        job_config=job_config,
+    )
+
+    assert first_dict_value(results["job"])["success"]
 
 
 def mock_release_class(release_class, project_class, **kwargs):

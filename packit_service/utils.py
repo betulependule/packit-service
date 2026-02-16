@@ -243,7 +243,7 @@ def _create_base_parser(
     return parser
 
 
-def get_pr_comment_parser(
+def get_comment_parser(
     prog: Optional[str] = None,
     description: Optional[str] = None,
     epilog: Optional[str] = None,
@@ -321,7 +321,7 @@ def get_pr_comment_parser(
     return parser
 
 
-def get_pr_comment_parser_fedora_ci(
+def get_comment_parser_fedora_ci(
     prog: Optional[str] = None,
     description: Optional[str] = None,
     epilog: Optional[str] = None,

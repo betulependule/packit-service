@@ -38,17 +38,17 @@ from packit_service.events.event_data import EventData
 from packit_service.package_config_getter import PackageConfigGetter
 from packit_service.utils import (
     elapsed_seconds,
+    get_comment_parser,
+    get_comment_parser_fedora_ci,
     get_packit_commands_from_comment,
-    get_pr_comment_parser,
-    get_pr_comment_parser_fedora_ci,
     pr_labels_match_configuration,
 )
 from packit_service.worker.allowlist import Allowlist
 from packit_service.worker.handlers import (
     CoprBuildHandler,
+    GitCommentHelpHandler,
     GithubAppInstallationHandler,
     GithubFasVerificationHandler,
-    GitPullRequestHelpHandler,
     KojiBuildHandler,
     ProposeDownstreamHandler,
     TestingFarmHandler,
@@ -124,9 +124,9 @@ def parse_comment(
         return ParsedComment()
 
     if comment.startswith("/packit-ci"):
-        parser = get_pr_comment_parser_fedora_ci()
+        parser = get_comment_parser_fedora_ci()
     else:
-        parser = get_pr_comment_parser()
+        parser = get_comment_parser()
 
     try:
         args = parser.parse_args(commands)
@@ -324,7 +324,7 @@ class SteveJobs:
             ),
         ) and self.is_help_comment(self.event.comment):
             self.event.comment_object.add_reaction(COMMENT_REACTION)
-            GitPullRequestHelpHandler.get_signature(
+            GitCommentHelpHandler.get_signature(
                 event=self.event,
                 job=None,
             ).apply_async()
