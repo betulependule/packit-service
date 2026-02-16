@@ -132,7 +132,7 @@ def pr_build_comment_event():
 @pytest.fixture(scope="module")
 def pr_help_comment_event():
     return json.loads(
-        (DATA_DIR / "webhooks" / "github" / "pr_comment_help.json").read_text(),
+        (DATA_DIR / "webhooks" / "github" / "pr_comment_help_command.json").read_text(),
     )
 
 
